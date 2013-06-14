@@ -1,0 +1,102 @@
+#
+# Add additional services here
+#
+
+on early-init
+
+    mkdir /storage/sdcard1 0000 system system
+    # for backwards compatibility
+    symlink /storage/sdcard1 /external_sd
+    symlink /sdcard1 /mnt/external_sd
+    export SECONDARY_STORAGE /storage/sdcard1
+
+#   mkdir /storage/usbdisk 0755 system system
+#   # for backwards compatibility
+#   symlink /storage/usbdisk /usbdisk
+#   symlink /storage/usbdisk /mnt/usbdisk
+#   export EXTERNAL_STORAGE_USB /storage/usbdisk
+
+
+on boot
+# CONFIG_PN544
+    setprop ro.nfc.port "I2C"
+    chmod 0600 /dev/pn544
+    chown nfc nfc /dev/pn544
+
+# Touch   
+    insmod /system/lib/modules/qt602240.ko
+
+    chmod 0666 /dev/touch_fops
+    chmod 0666 /dev/touch_monitor
+
+# N1037 geomagneticd (+)    
+    chmod 755 /system/bin/geomagneticd
+    chown system input /sys/class/input/input5/enable
+    chown system input /sys/class/input/input5/delay
+    chown system input /sys/class/input/input5/wake
+    chown compass input /sys/class/input/input6/offsets 
+    chown compass input /sys/class/input/input6/dynamic_matrix
+    chown compass input /sys/class/input/input6/offsets
+    chmod 0664 /sys/class/input/input6/offsets
+    chown system input /sys/class/input/input5/enable
+# MPL Sensors - added by p13041
+    chmod 0666 /dev/mpu
+    chmod 0666 /dev/mpuirq
+    echo "0" > /data/accel-check.flag
+
+# p13106 Add LED ctrl    
+	chmod 0666 /dev/led_fops    
+	chmod 0666 /dev/gpio_ctrl_fops	
+	
+on post-fs-data
+# create directory for Audio Effect(QSound) //N1066 20120410 Sound Patch by p11157_20120114
+    mkdir /data/misc/audioeffect 0777 system system     
+# pcu_p11800 [FEATURE_SKT_VE]
+    mkdir /data/ve 0777 radio radio
+
+#mms
+    mkdir /data/contents 0777 system system
+    mkdir /data/contents/MMS/ 0777 system system
+    mkdir /data/contents/MMS/TEMPLET 0777 system system
+    mkdir /data/contents/MMS/CAVATA 0777 system system
+    mkdir /data/contents/MMS/EMOTICON 0777 system system
+    
+# p12455 ++ [for Hoppin] 
+	mkdir /data/playready 0770 media media
+
+
+# create directory for DMB
+    mkdir /data/misc/dmb 0771 media media
+    mkdir /data/misc/dmb/content 0771 media media
+    chmod 2770 /data/radio
+# CONFIG_PN544 - FEATURE_PANTECH_NFC_SAVE_LOGCAT
+    mkdir /data/nfc 0740 nfc nfc
+    
+    # Sensors
+    mkdir /data/misc/sensors 0775 root root
+    write /data/system/sensors/settings 0
+    chmod 0664 /data/system/sensors/settings
+
+    mkdir /data/trace 0770 system system
+    mkdir /dev/pantech 0660
+    chown system system /dev/pantech
+# External Amp Device //N1066 20120509 Sound Patch
+    chmod 0666 /dev/ext_amp
+
+# External Amp Device //N1066 20120509 Sound Patch
+    chmod 0666 /dev/smd_vt
+    chmod 0666 /dev/smd_mvs
+    chmod 0666 /dev/msm_mvs
+    chmod 0666 /dev/mvs_amr
+
+service geomagneticd /system/bin/geomagneticd
+	user compass
+	group system input
+
+service skytestserver /system/bin/skytestserver
+    class core
+    socket skytest stream 666
+    user root
+	
+service shelld /system/xbin/shelld
+    class main
